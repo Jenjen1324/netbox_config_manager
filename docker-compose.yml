@@ -29,12 +29,15 @@ services:
       - EMAIL_USERNAME=netbox@init7.local
       - EMAIL_PASSWORD=1234
       - LOGIN_REQUIRED=true
-      - MEDIA_ROOT=/opt/netbox/netbox/media
+      - MEDIA_ROOT=/opt/netbox/media
       - RELEASE_CHECK_URL=https://api.github.com/repos/netbox-community/netbox/releases
       - NAPALM_USERNAME=${NAPALM_USERNAME:-}
       - NAPALM_PASSWORD=${NAPALM_PASSWORD:-}
+      - DB_WAIT_DEBUG=1
+      - PYTHONUNBUFFERED=1
     ports:
       - "127.0.0.1:$NETBOX_HTTP_PORT:8080"
+    command: python manage.py runserver 0.0.0.0:8080
   netbox-worker:
     <<: *netbox
     container_name: netbox-worker
@@ -55,7 +58,7 @@ services:
     image: postgres:13.3-alpine@sha256:cd1b837c86e9c2df778b3b4ece70dcd5a74f3ea68f82d00714aec91f34ba328d
     environment:
       - POSTGRES_USER=netbox
-      - POSTGRES_PASSWORD
+      - POSTGRES_PASSWORD=develop
       - POSTGRES_DB=netbox
     volumes:
       - ./data/postgres:/var/lib/postgresql/data

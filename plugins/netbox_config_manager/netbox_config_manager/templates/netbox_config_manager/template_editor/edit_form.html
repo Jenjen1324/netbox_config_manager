@@ -1,0 +1,118 @@
+{% extends 'generic/object_edit.html' %}
+{% load form_helpers %}
+{% load helpers %}
+
+
+{% block content-wrapper %}
+    <div class="tab-content">
+        <div class="tab-pane show active expand-height" id="edit-form" role="tabpanel"
+             aria-labelledby="object-list-tab">
+            <form action="" method="post" enctype="multipart/form-data" class="row expand-height">
+                {% csrf_token %}
+                <div class="col col-md-3" style="display: flex; flex-direction: column;">
+                    <h4>Context Data</h4>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Object ID to load data from"
+                               id="input-ctx-data" aria-labelledby="btn-ctx-data">
+                        <button class="btn btn-outline-secondary" type="button" id="btn-ctx-data">Load</button>
+                    </div>
+
+                    <div id="context-data-wrapper" style="flex-grow: 1;"></div>
+                </div>
+
+                <div class="col col-md-5">
+                    {{ form.template_content }}
+                </div>
+
+                <div class="col col-md-4">
+                    <h4>Preview <button class="btn btn-outline-secondary btn-sm" type="button" id="btn-preview">Refresh</button></h4>
+                    <pre id="preview-output"></pre>
+
+                    <div class="text-end my-3">
+                        {% block buttons %}
+                            <a class="btn btn-outline-danger" href="{{ return_url }}">Cancel</a>
+                            {% if object.pk %}
+                                <button type="submit" name="_update" class="btn btn-primary">
+                                    Save
+                                </button>
+                            {% endif %}
+                        {% endblock buttons %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+{% endblock content-wrapper %}
+
+{% block head %}
+    <style>
+
+        .ace-editor, .expand-height {
+            height: 100%;
+        }
+
+        #content > .tab-content {
+            height: calc(100% - 2rem);
+        }
+    </style>
+{% endblock %}
+
+{% block javascript %}
+    <script src="/static/netbox_config_manager/js/ace/ace.js"></script>
+    <script>
+        const objectId = '{{ object.pk }}';
+
+        const container = document.querySelector('#ace-editor')
+        const target = document.querySelector("input[name=" + container.dataset['target'] + "]")
+        const editor = ace.edit('ace-editor', {
+            mode: 'ace/mode/django',
+        })
+        editor.session.on('change', function (delta) {
+            target.value = editor.getValue()
+        })
+
+        const btnContext = document.getElementById('btn-ctx-data')
+        const inputContext = document.getElementById('input-ctx-data')
+        const wrapperContext = document.getElementById('context-data-wrapper')
+
+        const context_editor = ace.edit('context-data-wrapper', {
+            mode: 'ace/mode/json',
+            readOnly: true,
+        })
+
+        btnContext.onclick = () => {
+            const inputValue = inputContext.value
+            fetch(`/api/plugins/config_manager/config_template/${objectId}/context/${inputValue}`, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+                .then(result => result.json())
+                .then(data => {
+                    context_editor.setValue(JSON.stringify(data, undefined, 2))
+                    context_editor.gotoLine(0)
+                })
+        }
+
+        const btnPreview = document.getElementById('btn-preview')
+        const previewOutput = document.getElementById('preview-output')
+        btnPreview.onclick = () => {
+            fetch(`/api/plugins/config_manager/config_template/preview`, {
+                headers: {
+                    {#'Accept': 'text/plain',#}
+                    'Content-Type': 'application/json'
+                },
+                method: 'POST',
+                body: JSON.stringify({
+                    'context_data': context_editor.getValue(),
+                    'template_data': editor.getValue(),
+                })
+            }).then(result => result.json())
+                .then(data => {
+                    previewOutput.innerText = data
+                })
+        }
+
+    </script>
+{% endblock %}
