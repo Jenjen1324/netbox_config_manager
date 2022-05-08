@@ -1,24 +1,15 @@
 import json
+import re
 
+from jinja2 import TemplateSyntaxError
+from netaddr.ip import IPNetwork
 from rest_framework import renderers
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.generics import GenericAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from .serializers import ConfigTemplateSerializer, GraphQLQuerySerializer
-from ..models import ConfigTemplate, GraphQLQuery
-from netbox.api.viewsets import ModelViewSet
-
-
-class ConfigTemplateViewSet(ModelViewSet):
-    queryset = ConfigTemplate.objects.all()
-    serializer_class = ConfigTemplateSerializer
-
-
-class GraphQLQueryViewSet(ModelViewSet):
-    queryset = GraphQLQuery.objects.all()
-    serializer_class = GraphQLQuerySerializer
+from ..models import ConfigTemplate
 
 
 class ConfigTemplateContextView(GenericAPIView):
@@ -37,6 +28,7 @@ class PlainTextRenderer(renderers.BaseRenderer):
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
         return data
+
 
 class CSRFExcemptSessionAuthentication(SessionAuthentication):
 
@@ -67,7 +59,37 @@ class ConfigTemplatePreviewView(GenericAPIView):
         try:
             import jinja2
             env = jinja2.Environment()
+            env.filters['regex_replace'] = regex_replace
+            env.filters['cisco_iface'] = cisco_iface
+            env.filters['ip'] = ip
             tmpl = env.from_string(template_data)
-            return Response(data=tmpl.render(**context_data))
+            data = tmpl.render(**context_data)
+            # Filter empty lines
+            data = "\n".join(filter(lambda x: not re.match(r'^\s*$', x), data.split('\n')))
+
+            return Response(data=data)
+        except TemplateSyntaxError as e:
+            msg = f"""
+            TemplateSyntaxError: {e.message}
+            
+            Line Number: {e.lineno}
+            """
+            return Response(data=msg)
         except Exception as e:
-            return Response(data=f'Error while rendering template:\n\n' + str(e))
+            return Response(data=f"Error: {e}")
+
+
+def regex_replace(subject: str, search: str, replace: str):
+    return re.sub(re.compile(search), replace, subject)
+
+
+def cisco_iface(subject: str):
+    parts = re.match(r'^([A-Za-z]+)(.+)$', subject)
+    return {
+        'class': parts.group(1),
+        'number': parts.group(2)
+    }
+
+
+def ip(address):
+    return IPNetwork(address)

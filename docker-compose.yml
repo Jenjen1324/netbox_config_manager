@@ -97,5 +97,18 @@ services:
     healthcheck:
       test: echo | telnet 127.0.0.1 25
 
+  vault:
+    image: vault
+    environment:
+      - 'VAULT_LOCAL_CONFIG={"backend": {"file": {"path": "/vault/file"}}, "ui": true, "default_lease_ttl": "168h", "max_lease_ttl": "720h", "listener": {"tcp": {"address": "0.0.0.0:8200", "tls_disable": "true"}}}'
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ./data/vault/file:/vault/file
+      - ./data/vault/config:/vault/config
+    command:
+      - server
+    ports:
+      - "127.0.0.1:8200:8200"
 networks:
   default:

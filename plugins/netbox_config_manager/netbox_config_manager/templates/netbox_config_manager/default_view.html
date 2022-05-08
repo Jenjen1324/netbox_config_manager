@@ -1,0 +1,40 @@
+{% extends 'generic/object.html' %}
+{% load render_table from django_tables2 %}
+{% load buttons %}
+{% load static %}
+{% load helpers %}
+{% load plugins %}
+
+{% block content %}
+    <div class="row">
+        <div class="col col-md-5">
+            <div class="card">
+                <h5 class="card-header">
+                    Data
+                </h5>
+                <div class="card-body">
+                    <table class="table table-hover attr-table">
+                        {% for field in fields %}
+                            <tr>
+                                <td>{{ field.name }}</td>
+                                <td>{{ field.value }}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+            {% include 'inc/panels/custom_fields.html' %}
+            {% include 'inc/panels/tags.html' %}
+            {% include 'inc/panels/comments.html' %}
+            {% plugin_left_page object %}
+        </div>
+        <div class="col col-md-7">
+            {% plugin_right_page object %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col col-md-12">
+            {% plugin_full_width_page object %}
+        </div>
+    </div>
+{% endblock %}

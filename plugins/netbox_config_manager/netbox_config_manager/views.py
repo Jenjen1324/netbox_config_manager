@@ -1,27 +1,17 @@
-from netbox.views.generic import ObjectEditView, ObjectDeleteView, ObjectListView, ObjectView
-from netbox_config_manager.forms import GraphQLQueryForm
-from netbox_config_manager.models import GraphQLQuery
-from netbox_config_manager.tables import GraphQLQueryTable
+from netbox.views.generic import ObjectEditView, ObjectView
+
+from . import models, forms
 
 
-class GraphQLQueryListView(ObjectListView):
-    queryset = GraphQLQuery.objects.all()
-    # filterset = filtersets.VRFFilterSet
-    # filterset_form = forms.VRFFilterForm
-    table = GraphQLQueryTable
-
-
-class GraphQLQueryView(ObjectView):
-    queryset = GraphQLQuery.objects.all()
+class ConfigTemplateView(ObjectView):
+    queryset = models.ConfigTemplate.objects.all()
+    template_name = 'netbox_config_manager/template_editor/view.html'
 
     class Meta:
-        model = GraphQLQuery
+        model = models.ConfigTemplate
 
 
-class GraphQLQueryEditView(ObjectEditView):
-    queryset = GraphQLQuery.objects.all()
-    form = GraphQLQueryForm
-
-
-class GraphQLQueryDeleteView(ObjectDeleteView):
-    queryset = GraphQLQuery.objects.all()
+class ConfigTemplateEditorView(ObjectEditView):
+    queryset = models.ConfigTemplate.objects.all()
+    form = forms.ConfigTemplateEditorForm
+    template_name = 'netbox_config_manager/template_editor/edit_form.html'

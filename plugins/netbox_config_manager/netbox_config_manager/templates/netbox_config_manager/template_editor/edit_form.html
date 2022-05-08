@@ -24,9 +24,9 @@
                     {{ form.template_content }}
                 </div>
 
-                <div class="col col-md-4">
+                <div class="col col-md-4"  style="display: flex; flex-direction: column;">
                     <h4>Preview <button class="btn btn-outline-secondary btn-sm" type="button" id="btn-preview">Refresh</button></h4>
-                    <pre id="preview-output"></pre>
+                    <div id="preview-output" style="flex-grow: 1;"></div>
 
                     <div class="text-end my-3">
                         {% block buttons %}
@@ -97,6 +97,10 @@
 
         const btnPreview = document.getElementById('btn-preview')
         const previewOutput = document.getElementById('preview-output')
+        const previewEditor = ace.edit('preview-output', {
+            readOnly: true,
+            mode: 'ace/mode/django',
+        })
         btnPreview.onclick = () => {
             fetch(`/api/plugins/config_manager/config_template/preview`, {
                 headers: {
@@ -110,7 +114,8 @@
                 })
             }).then(result => result.json())
                 .then(data => {
-                    previewOutput.innerText = data
+                    previewEditor.setValue(data)
+                    previewEditor.gotoLine(0)
                 })
         }
 

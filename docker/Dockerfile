@@ -27,3 +27,6 @@ COPY --chown=$UID:$GID ./plugins /opt/netbox/plugins
 COPY --chown=$UID:$GID ./docker/install_plugins.sh /opt/netbox
 
 RUN cd /opt/netbox && bash /opt/netbox/install_plugins.sh
+
+
+COPY --chown=$UID:$GID ./netbox/netbox/extras/plugins/urls.py /opt/netbox/netbox/extras/plugins/urls.py
