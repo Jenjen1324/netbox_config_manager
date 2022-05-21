@@ -1,7 +1,6 @@
 version: '3.8'
 services:
   netbox: &netbox
-    container_name: netbox
     build:
       context: .
       dockerfile: ./docker/Dockerfile
@@ -9,6 +8,8 @@ services:
       - ./data/media:/opt/netbox/netbox/media
       - ./scripts:/opt/netbox/netbox/scripts
       - ./plugins:/opt/netbox/plugins
+      - ./custom_settings.py:/opt/netbox/netbox/netbox/custom_settings.py
+      - ./netbox/netbox/dcim/:/opt/netbox/netbox/dcim/
     depends_on:
       - db
       - redis
@@ -18,11 +19,11 @@ services:
     environment:
       - DB_USER=netbox
       - DB_PASSWORD=develop
-      - DB_HOST=netbox-db
+      - DB_HOST=db
       - SECRET_KEY=develop
-      - REDIS_HOST=netbox-redis
+      - REDIS_HOST=redis
       - REDIS_PASSWORD=develop
-      - REDIS_CACHE_HOST=netbox-redis-cache
+      - REDIS_CACHE_HOST=redis-cache
       - REDIS_CACHE_PASSWORD=develop
       - REDIS_CACHE_DATABASE=0
       - EMAIL_SERVER=smtp
@@ -35,12 +36,14 @@ services:
       - NAPALM_PASSWORD=${NAPALM_PASSWORD:-}
       - DB_WAIT_DEBUG=1
       - PYTHONUNBUFFERED=1
+      - SKIP_STARTUP_SCRIPTS=true
+      - SKIP_SUPERUSER=true
+      - DJANGO_SETTINGS_MODULE=netbox.custom_settings
     ports:
       - "127.0.0.1:$NETBOX_HTTP_PORT:8080"
-    command: python manage.py runserver 0.0.0.0:8080
+    command: python manage.py runserver --skip-checks 0.0.0.0:8080
   netbox-worker:
     <<: *netbox
-    container_name: netbox-worker
     depends_on:
       - db
       - redis
@@ -54,7 +57,6 @@ services:
     ports: []
     labels: []
   db:
-    container_name: netbox-db
     image: postgres:13.3-alpine@sha256:cd1b837c86e9c2df778b3b4ece70dcd5a74f3ea68f82d00714aec91f34ba328d
     environment:
       - POSTGRES_USER=netbox
@@ -63,7 +65,6 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
   redis:
-    container_name: netbox-redis
     image: redis:6.2.5-alpine@sha256:ca9a5a3d4bb958793bb4c24034a3b99e5e13fb6a15b1a3ae70f9e21652a76aff
     command:
       - sh
@@ -74,7 +75,6 @@ services:
     environment:
       - REDIS_PASSWORD=develop
   redis-cache:
-    container_name: netbox-redis-cache
     image: redis:6.2.5-alpine@sha256:ca9a5a3d4bb958793bb4c24034a3b99e5e13fb6a15b1a3ae70f9e21652a76aff
     command:
       - sh

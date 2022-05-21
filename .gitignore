@@ -2,3 +2,5 @@
 /netbox
 /.idea
 .env
+
+__pycache__

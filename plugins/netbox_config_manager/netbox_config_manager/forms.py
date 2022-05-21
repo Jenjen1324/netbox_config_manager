@@ -50,26 +50,25 @@ class TransportConfigurationForm(NetBoxModelForm):
     password = forms.CharField(label='Password', widget=forms.PasswordInput, required=False)
 
     authorization_usage_users = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
+        queryset=User.objects.get_queryset(),
         widget=widgets.StaticSelectMultiple,
         label='Users with usage access',
         required=False,
-
     )
     authorization_usage_groups = forms.ModelMultipleChoiceField(
-        queryset=Group.objects.all(),
+        queryset=Group.objects.get_queryset(),
         widget=widgets.StaticSelectMultiple,
         label='Groups with usage access',
         required=False,
     )
     authorization_manage_users = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
+        queryset=User.objects.get_queryset(),
         widget=widgets.StaticSelectMultiple,
         label='Users with write access',
         required=False,
     )
     authorization_manage_groups = forms.ModelMultipleChoiceField(
-        queryset=Group.objects.all(),
+        queryset=Group.objects.get_queryset(),
         widget=widgets.StaticSelectMultiple,
         label='Groups with write access',
         required=False,
@@ -93,10 +92,11 @@ class TransportConfigurationForm(NetBoxModelForm):
             else:
                 self.cleaned_data['secret_data'] = json.loads(previous_secret)
         else:
-            self.cleaned_data['secret_data'] = json.dumps({
+            self.cleaned_data['secret_data'] = {
                 'username': self.cleaned_data['username'],
                 'password': self.cleaned_data['password'],
-            })
+            }
+        return self.cleaned_data
 
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -104,11 +104,12 @@ class TransportConfigurationForm(NetBoxModelForm):
         vault_client = vault.get_vault_client()
         vault_client.put_transport_configuration_secret(
             instance.secret_reference,
-            self.cleaned_data['secret_data']
+            json.dumps(self.cleaned_data['secret_data'])
         )
 
         if commit:
             instance.save()
+            self.save_m2m()
         return instance
 
     class Meta:

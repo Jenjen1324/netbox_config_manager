@@ -1,8 +1,6 @@
 import json
-import re
 
 from jinja2 import TemplateSyntaxError
-from netaddr.ip import IPNetwork
 from rest_framework import renderers
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.generics import GenericAPIView
@@ -10,14 +8,23 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..models import ConfigTemplate
+from ..util.config_template import render_template
 
 
 class ConfigTemplateContextView(GenericAPIView):
     queryset = ConfigTemplate.objects.get_queryset()
 
     def get(self, request, *, template_id, object_pk):
+        """
+        :param rest_framework.request.Request request:
+        :param template_id:
+        :param object_pk:
+        :return:
+        """
         config_template: ConfigTemplate = self.queryset.get(id=template_id)
         data = config_template.resolve_context_data(object_pk, request)
+
+        print(request._request._get_raw_host())
 
         return Response(data)
 
@@ -57,16 +64,7 @@ class ConfigTemplatePreviewView(GenericAPIView):
             return Response(data='Êrror while parsing context data\n\n' + str(e))
 
         try:
-            import jinja2
-            env = jinja2.Environment()
-            env.filters['regex_replace'] = regex_replace
-            env.filters['cisco_iface'] = cisco_iface
-            env.filters['ip'] = ip
-            tmpl = env.from_string(template_data)
-            data = tmpl.render(**context_data)
-            # Filter empty lines
-            data = "\n".join(filter(lambda x: not re.match(r'^\s*$', x), data.split('\n')))
-
+            data = render_template(template_data, context_data)
             return Response(data=data)
         except TemplateSyntaxError as e:
             msg = f"""
@@ -77,19 +75,3 @@ class ConfigTemplatePreviewView(GenericAPIView):
             return Response(data=msg)
         except Exception as e:
             return Response(data=f"Error: {e}")
-
-
-def regex_replace(subject: str, search: str, replace: str):
-    return re.sub(re.compile(search), replace, subject)
-
-
-def cisco_iface(subject: str):
-    parts = re.match(r'^([A-Za-z]+)(.+)$', subject)
-    return {
-        'class': parts.group(1),
-        'number': parts.group(2)
-    }
-
-
-def ip(address):
-    return IPNetwork(address)

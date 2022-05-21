@@ -30,3 +30,5 @@ RUN cd /opt/netbox && bash /opt/netbox/install_plugins.sh
 
 
 COPY --chown=$UID:$GID ./netbox/netbox/extras/plugins/urls.py /opt/netbox/netbox/extras/plugins/urls.py
+
+COPY docker/reduced_entrypoint.sh /opt/netbox/docker-entrypoint.sh

@@ -1,0 +1,10 @@
+<button id="nb-config-manager-generate-template" type="button" class="btn btn-sm btn-primary dropdown-toggle"
+        data-bs-toggle="dropdown"
+        aria-expanded="false">
+    <i class="mdi mdi-box-shadow" aria-hidden="true"></i> Generate Template
+</button>
+<ul class="dropdown-menu" aria-labeled-by="nb-config-manager-generate-template">
+    {% for template in templates %}
+        <li><a class="dropdown-item" href="{% url 'plugins:netbox_config_manager:configtemplate_render_template' template.pk object.pk %}">{{ template.name }}</a></li>
+    {% endfor %}
+</ul>
