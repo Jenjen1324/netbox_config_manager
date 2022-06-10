@@ -6,7 +6,9 @@ urlpatterns = [
     path('configtemplate/<int:pk>/edit_template/', views.ConfigTemplateEditorView.as_view(),
          name='configtemplate_edit_template'),
     path('configtemplate/<int:pk>/generate/<int:pk_model>', views.ConfigTemplateGeneratorView.as_view(),
-         name='configtemplate_render_template')
+         name='configtemplate_render_template'),
+    path('configtemplate/<int:pk>/deploy/<int:pk_model>/<int:config_transport>', views.ConfigTemplateDeployView.as_view(),
+         name='configtemplate_deploy'),
 ]
 
 for simple_model in simple_models.MODEL_REGISTRY:

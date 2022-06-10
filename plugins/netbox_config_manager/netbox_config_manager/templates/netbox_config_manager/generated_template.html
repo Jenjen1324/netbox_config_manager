@@ -41,7 +41,7 @@
             </button>
             <ul class="dropdown-menu" aria-labeled-by="nb-config-manager-execute">
                 {% for transport in transports %}
-                    <li><a class="dropdown-item" href="#TODO">
+                    <li><a class="dropdown-item" href="{% url 'plugins:netbox_config_manager:configtemplate_deploy' object.pk pk_model transport.pk %}">
                         {{ transport.name }}
                     </a></li>
                 {% endfor %}

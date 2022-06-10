@@ -2,7 +2,7 @@
 
 source .env
 
-VAULT_ADDR='http://127.0.0.1:8200'
+export VAULT_ADDR='http://127.0.0.1:8200'
 
 vault operator unseal $VAULT_UNSEAL_KEY_1
 vault operator unseal $VAULT_UNSEAL_KEY_2
